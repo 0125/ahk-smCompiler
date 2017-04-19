@@ -1,5 +1,7 @@
 #SingleInstance, force
 #Persistent
+hotkey, IfWinActive, ahk_exe Notepad++.exe
+hotkey, ~^s, reloadScript
 
 Gosub loadSettings
 
@@ -15,23 +17,31 @@ If !(OutExtension = "sp")
 	return
 	
 compile(file)
-
-FileCopy, % OutDir "\" OutNameNoExt ".smx", g:\GAMES\SourceServers\l4d1\left4dead\addons\sourcemod\plugins, 1
-
-; load plugin in server
-If !WinExist("ahk_exe srcds.exe")
-{
-	run, % serverPath "\serverL4D1.bat"
-	WinWait, ahk_exe srcds.exe
-}
-_activeWindow := WinActive("A")
-WinActivate, ahk_exe srcds.exe
-SendInput, sm plugins unload_all`; sm plugins load %OutNameNoExt% {enter}
-WinActivate, % "ahk_id " _activeWindow
-
+hotkey, f1, loadPlugin
+return
 
 ; */
 ; compile("E:\Downloads\l4d_ff_reverse.sp")	; compile file
+return
+
+loadPlugin:
+	Gosub setGameVersion
+	
+	FileCopy, % OutDir "\" OutNameNoExt ".smx", g:\GAMES\SourceServers\l4d1\left4dead\addons\sourcemod\plugins, 1
+	FileCopy, % OutDir "\" OutNameNoExt ".smx", g:\GAMES\SourceServers\l4d2\left4dead2\addons\sourcemod\plugins, 1
+		
+	If !WinExist("ahk_exe srcds.exe")
+	{
+		run, % serverPath "\serverL4D" gameVersion ".bat"
+		WinWait, ahk_exe srcds.exe
+	}
+	_activeWindow := WinActive("A")
+	WinActivate, ahk_exe srcds.exe
+	SendInput, sm plugins unload %OutNameNoExt%`; sm plugins load %OutNameNoExt% {enter}
+	WinActivate, % "ahk_id " _activeWindow
+	
+	If WinExist("ahk_class Valve001")
+		WinActivate, ahk_class Valve001
 return
 
 loadSettings:
@@ -40,7 +50,17 @@ loadSettings:
 	sm.Dir := A_ScriptDir "\res\" sm.Version
 	sm.CompileDir := A_ScriptDir "\res\" sm.Version "\compiled"
 	
-	serverPath := "g:\GAMES\SourceServers\l4d1"
+	Gosub setGameVersion
+	
+	serverPath := "g:\GAMES\SourceServers\l4d" gameVersion
+return
+
+setGameVersion:
+	gameVersion := 2
+	IfWinExist, ahk_exe left4dead.exe
+		gameVersion := 1
+	IfWinExist, ahk_exe left4dead2.exe
+		gameVersion := 2
 return
 
 compile(input) {
@@ -71,4 +91,6 @@ closeTooltip:
 	tooltip
 return
 
-~^s::reload
+reloadScript:
+	reload
+return
