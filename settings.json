@@ -1,0 +1,25 @@
+{
+  "games": {
+    "left4dead": {
+      "appid": "500\n",
+      "dir": "D:\\Games\\Steam\\steamapps\\common\\left 4 dead",
+      "exe": "left4dead.exe",
+      "path": "D:\\Games\\Steam\\steamapps\\common\\left 4 dead\\left4dead.exe",
+      "title": "left4dead"
+    }
+  },
+  "pos": {
+    "guiConsole": {
+      "h": 952,
+      "w": 638,
+      "x": 2546,
+      "y": 0
+    },
+    "left4dead": {
+      "h": 480,
+      "w": 640,
+      "x": 1917,
+      "y": 232
+    }
+  }
+}

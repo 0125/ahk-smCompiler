@@ -1,96 +1,94 @@
+/*
+	This script needs this ingame bind to function:
+		bind "arrowdown" "exec commands.cfg"
+
+	ToDo:
+		https://wiki.alliedmods.net/Spcomp_switches
+			Instead of copying l4d_stock into smComper sourcemod versions folders,
+			use the -i switch and a setting in smcompiler.ahk to include them
+
+	Steam appidss
+		http://api.steampowered.com/ISteamApps/GetAppList/v0002/
+*/
+
 #SingleInstance, force
 #Persistent
-hotkey, IfWinActive, ahk_exe Notepad++.exe
-hotkey, ~^s, reloadScript
-
-Gosub loadSettings
-
-; /*
-; get file from notepad++ title
-WinGetTitle, winTitle, ahk_class Notepad++
-StringReplace, file, winTitle, - Notepad++
-file := Trim(file)
-
-; only compile .sp files
-SplitPath, file, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
-If !(OutExtension = "sp")
-	return
-	
-compile(file)
-hotkey, f1, loadPlugin
-return
-
-; */
-; compile("E:\Downloads\l4d_ff_reverse.sp")	; compile file
-return
-
-loadPlugin:
-	Gosub setGameVersion
-	
-	FileCopy, % OutDir "\" OutNameNoExt ".smx", g:\GAMES\SourceServers\l4d1\left4dead\addons\sourcemod\plugins, 1
-	FileCopy, % OutDir "\" OutNameNoExt ".smx", g:\GAMES\SourceServers\l4d2\left4dead2\addons\sourcemod\plugins, 1
-		
-	If !WinExist("ahk_exe srcds.exe")
-	{
-		run, % serverPath "\serverL4D" gameVersion ".bat"
-		WinWait, ahk_exe srcds.exe
-	}
-	_activeWindow := WinActive("A")
-	WinActivate, ahk_exe srcds.exe
-	SendInput, sm plugins unload %OutNameNoExt%`; sm plugins load %OutNameNoExt% {enter}
-	WinActivate, % "ahk_id " _activeWindow
-	
-	If WinExist("ahk_class Valve001")
-		WinActivate, ahk_class Valve001
-return
-
-loadSettings:
-	global sm := []
-	sm.Version := "1.8"
-	sm.Dir := A_ScriptDir "\res\" sm.Version
-	sm.CompileDir := A_ScriptDir "\res\" sm.Version "\compiled"
-	
-	Gosub setGameVersion
-	
-	serverPath := "g:\GAMES\SourceServers\l4d" gameVersion
-return
-
-setGameVersion:
-	gameVersion := 2
-	IfWinExist, ahk_exe left4dead.exe
-		gameVersion := 1
-	IfWinExist, ahk_exe left4dead2.exe
-		gameVersion := 2
-return
-
-compile(input) {
-	DetectHiddenWindows, On
-	
-	SplitPath, input, OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
-	
-	smDir := sm.Dir
-	ErrorFile := "smCompilerErrors.txt"
-	run, %comspec% /c "%smDir%\spcomp.exe" %input% -e=%OutDir%\%ErrorFile%, % OutDir, Hide, cmdPID	; silent
-	WinWait, ahk_pid%cmdPID%
-	WinWaitClose, ahk_pid%cmdPID%
-	If FileExist(OutDir "\" ErrorFile)
-	{
-		FileRead, Error, % OutDir "\" ErrorFile
-		FileDelete, % OutDir "\" ErrorFile
-		msgbox, % Error
-	}
-	else
-	{
-		tooltip Compiled!
-		SetTimer, closeTooltip, -250
-	}
-	
+SetBatchLines -1
+OnExit, exitRoutine
+global debug := 0	; debug status
+global settings	:= []									; settings obj
+global settingsFile	:= A_ScriptDir "\settings.json"		; settings file
+global appidsFile	:= A_ScriptDir "\res\appids.json"	; settings file
+If !FileExist(appidsFile) {
+	SplashTextOn, 400, 20, % A_ScriptName, Downloading app id file
+	DownloadToFile("http://api.steampowered.com/ISteamApps/GetAppList/v0002/", appidsFile)
+	SplashTextOff
 }
+global guiConsole := []	; vars relevant to guiConsole
+global steam := []		; stores steam vars
+global plugin := []		; stores notepad plus plus opened file vars
+global game := []		; stores game vars
+global sm := []			; stores sourcemod vars
+sm.Version := "1.9"
+loadSettings()
+If (debug) {
+	Menu, tray, NoStandard
+	Menu, tray, add, Save game position, saveGamePos
+	Menu, tray, add
+	Menu, tray, Standard
+	
+	; msgbox end of debug section
+	return
+}
+gameRunning := checkRunningGames()
+If !(gameRunning)
+	guiSelect()
+else
+	Gosub exitAfterGameClose
+return
+#Include <JSON>
+#Include, %A_ScriptDir%\inc
+#Include, functions.ahk
+#Include, subroutines.ahk
+#Include, Edit.ahk
 
-closeTooltip:
-	tooltip
+:*:smtemplate::
+smtemplate=
+(
+#include <sourcemod>
+#pragma newdecls required
+#pragma semicolon 1
+
+public Plugin myinfo =
+{
+	name = "My First Plugin",
+	author = "Me",
+	description = "My first plugin ever",
+	version = "1.0",
+	url = "http://www.sourcemod.net/"
+};
+
+public void OnPluginStart()
+{
+	PrintToServer("Hello world!");
+}
+)
+	pasteText(smtemplate)
 return
 
-reloadScript:
-	reload
+f5::
+	setCompileFile()
 return
+
+#IfWinActive, ahk_exe Notepad++.exe
+
+~^s::
+	gui msgbox: destroy
+	If InStr(getNotepadPlusPlusFile(), "ahk")
+		reload
+	else If (compile(plugin.path))
+		Gosub loadPlugin
+return
+f1::Gosub loadPlugin
+
+#IfWinActive

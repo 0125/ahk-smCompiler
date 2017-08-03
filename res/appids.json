@@ -1,0 +1,14 @@
+{
+  "applist": {
+    "apps": [
+      {
+        "appid": 500,
+        "name": "Left 4 Dead"
+      },
+	  {
+        "appid": 550,
+        "name": "Left 4 Dead 2"
+      }
+    ]
+  }
+}
