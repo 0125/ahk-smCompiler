@@ -1,3 +1,4 @@
+; input = full path to sourcemod script file
 compileSourcemodScript(input) {
     verifySourcemodScriptFile(input)
     DetectHiddenWindows, On
@@ -19,9 +20,10 @@ compileSourcemodScript(input) {
         return
     }
     
-    ; move compiled file to server
+    ; move compiled file to server & source file folder
     SplitPath, input , OutFileName, OutDir, OutExtension, OutNameNoExt, OutDrive
-    FileMove, % smcompilerDir "\" OutNameNoExt ".smx", % sm.serverPluginsDir, 1 ; overwrite
+    FileCopy, % smcompilerDir "\" OutNameNoExt ".smx", % OutDir, 1 ; overwrite into source script dir
+    FileMove, % smcompilerDir "\" OutNameNoExt ".smx", % sm.serverPluginsDir, 1 ; overwrite into server sourcemod plugins dir
 
     serverCommand("sm plugins unload_all; sm plugins refresh {enter}") ; reload server plugins
 }

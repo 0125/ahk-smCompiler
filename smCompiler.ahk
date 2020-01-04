@@ -2,7 +2,7 @@
 global g_debugMode := false
 global sm := {} ; sourcemod information
 sm.serverPluginsDir := "D:\Games\SourceServers\l4d2\left4dead2\addons\sourcemod\plugins" ; compiled plugins will be moved into this folder
-sm.compilerVersion := "1.9" ; sourcemod compiler version; any version found in ..\res\sourcemod eg: 1.9
+sm.compilerVersion := "1.7.3" ; sourcemod compiler version; any version found in ..\res\sourcemod eg: 1.9
 sm.customStocksDir := "D:\Github\sourcemod-stocks" ; folder containing include files
 sm.compilerDir := A_ScriptDir "\res\sourcemod\" sm.compilerVersion
 
@@ -15,7 +15,7 @@ If (g_debugMode) {
     sm.file := "D:\Downloads\speech.sp"
     compileSourcemodScript(sm.file)
 
-    ; msgbox end of script
+    msgbox end of script
     return
 }
 sm.file := selectSourcemodScript()
